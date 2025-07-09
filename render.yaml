@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: cbseguru-backend
+    env: python
+    buildCommand: ""
+    startCommand: python app.py
+    envVars:
+      - key: OPENROUTER_API_KEY
+        value: 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
