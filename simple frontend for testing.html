@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CBSEGuru.ai - AI Teacher</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1e2f;
+      color: #ffffff;
+    }
+
+    h2, h3, h4 {
+      margin: 0 0 15px;
+    }
+
+    /* Modal */
+    #modal {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #modalContent {
+      background-color: #2e2e3e;
+      padding: 30px 40px;
+      border-radius: 12px;
+      text-align: center;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    button {
+      background-color: #673ab7;
+      color: white;
+      border: none;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #5e35b1;
+    }
+
+    /* Chatbot UI */
+    #chatbot {
+      display: none;
+      flex-direction: column;
+      justify-content: flex-end;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #chatDisplay {
+      flex: 1;
+      overflow-y: auto;
+      background-color: #111;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 10px;
+      max-width: 80%;
+      line-height: 1.4;
+    }
+
+    .user-message {
+      background-color: #673ab7;
+      align-self: flex-end;
+    }
+
+    .ai-message {
+      background-color: #4caf50;
+      align-self: flex-start;
+    }
+
+    #inputArea {
+      display: flex;
+      gap: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      resize: none;
+      border-radius: 8px;
+      padding: 10px;
+      border: none;
+      background-color: #2e2e3e;
+      color: white;
+      font-size: 16px;
+    }
+
+    #sendButton {
+      background-color: #673ab7;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #sendButton:hover {
+      background-color: #5e35b1;
+    }
+  </style>
+</head>
+<body>
+  <div id="modal">
+    <div id="modalContent">
+      <h3 id="modalTitle">Select Your Grade</h3>
+      <div id="modalButtons" class="button-container">
+        <button onclick="selectGrade(9)">Grade 9</button>
+        <button onclick="selectGrade(10)">Grade 10</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="chatbot">
+    <div id="chatDisplay"></div>
+    <div id="inputArea">
+      <textarea id="question" placeholder="Ask your teacher..."></textarea>
+      <button id="sendButton" onclick="ask()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    let selectedGrade = null;
+    let selectedSubject = null;
+    let selectedChapter = null;
+
+    const chapterTitles = {
+      "9": {
+        "Science": [
+          "Matter in Our Surroundings", "Is Matter Around Us Pure?", "Atoms and Molecules", "Structure of the Atom",
+          "The Fundamental Unit of Life", "Tissues", "Diversity in Living Organisms", "Motion", "Force and Laws of Motion",
+          "Gravitation", "Work and Energy", "Sound"
+        ],
+        "ENGLISH -BEEHIVE": [
+          "The Fun They Had", "The Sound of Music", "The Little Girl", "A Truly Beautiful Mind", "The Snake and the Mirror",
+          "My Childhood", "Packing", "Reach for the Top", "The Bond of Love"
+        ],
+        "ENGLSH-SR": [
+          "The Lost Child", "The Adventures of Toto", "Iswaran the Storyteller", "In the Kingdom of Fools",
+          "The Happy Prince", "Weathering the Storm in Ersama", "The Last Leaf", "A House is Not a Home", "The Beggar"
+        ],
+        "Geo": [
+          "India – Size and Location", "Physical Features of India", "Drainage", "Climate", "Natural Vegetation and Wildlife", "Population"
+        ],
+        "History": [
+          "The French Revolution", "Socialism in Europe and the Russian Revolution", "Nazism and the Rise of Hitler",
+          "Forest Society and Colonialism", "Pastoralists in the Modern World"
+        ],
+        "Political": [
+          "What is Democracy? Why Democracy?", "Constitutional Design", "Electoral Politics", "Working of Institutions", "Democratic Rights"
+        ],
+        "Economics": [
+          "The Story of Village Palampur", "People as Resource", "Poverty as a Challenge", "Food Security in India"
+        ]
+      },
+      "10": {
+        "Science": [
+          "Chemical Reactions and Equations", "Acids, Bases and Salts", "Metals and Non-Metals", "Carbon and its Compounds",
+          "Periodic Classification of Elements", "Life Processes", "Control and Coordination", "How do Organisms Reproduce?",
+          "Heredity and Evolution", "Light – Reflection and Refraction", "Human Eye and the Colourful World", "Electricity"
+        ],
+        "English": [
+          "A Letter to God", "Nelson Mandela", "Two Stories About Flying", "From the Diary of Anne Frank", "The Hundred Dresses – I",
+          "The Hundred Dresses – II", "Glimpses of India", "Mijbil the Otter", "Madam Rides the Bus"
+        ],
+        "English Sr": [
+          "A Triumph of Surgery", "The Thief's Story", "The Midnight Visitor", "A Question of Trust", "Footprints Without Feet",
+          "The Making of a Scientist", "The Necklace", "Bholi", "The Book That Saved the Earth"
+        ],
+        "Geo": [
+          "Resources and Development", "Forest and Wildlife Resources", "Water Resources", "Agriculture",
+          "Minerals and Energy Resources", "Manufacturing Industries", "Lifelines of National Economy"
+        ],
+        "History": [
+          "The Rise of Nationalism in Europe", "Nationalism in India", "The Making of a Global World", "The Age of Industrialisation",
+          "Print Culture and the Modern World"
+        ],
+        "Political": [
+          "Power Sharing", "Federalism", "Democracy and Diversity", "Gender, Religion and Caste", "Popular Struggles and Movements"
+        ],
+        "Economics": [
+          "Development", "Sectors of the Indian Economy", "Money and Credit", "Globalisation and the Indian Economy", "Consumer Rights"
+        ]
+      }
+    };
+
+    function selectGrade(grade) {
+      selectedGrade = grade;
+      const subjects = Object.keys(chapterTitles[grade]);
+
+      document.getElementById("modalTitle").innerText = "Select Subject";
+      const btnContainer = document.getElementById("modalButtons");
+      btnContainer.innerHTML = "";
+      subjects.forEach(subject => {
+        const btn = document.createElement("button");
+        btn.innerText = subject;
+        btn.onclick = () => selectSubject(subject);
+        btnContainer.appendChild(btn);
+      });
+    }
+
+    function selectSubject(subject) {
+      selectedSubject = subject;
+      const chapters = chapterTitles[selectedGrade][subject];
+
+      document.getElementById("modalTitle").innerText = "Select Chapter";
+      const btnContainer = document.getElementById("modalButtons");
+      btnContainer.innerHTML = "";
+      chapters.forEach((title, i) => {
+        const btn = document.createElement("button");
+        btn.innerText = `Chapter ${i + 1}: ${title}`;
+        btn.onclick = () => selectChapter(i + 1);
+        btnContainer.appendChild(btn);
+      });
+    }
+
+    function selectChapter(chapter) {
+      selectedChapter = chapter;
+      document.getElementById("modal").style.display = "none";
+      document.getElementById("chatbot").style.display = "flex";
+    }
+
+    async function ask() {
+      const q = document.getElementById("question").value.trim();
+      if (!q) return;
+
+      displayMessage(q, "user");
+      document.getElementById("question").value = "";
+
+      const res = await fetch("http://localhost:5000/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          grade: selectedGrade.toString(),
+          subject: selectedSubject,
+          chapter: selectedChapter.toString(),
+          question: q
+        })
+      });
+
+      const data = await res.json();
+      const reply = data.answer || data.error;
+      displayMessage(reply, "ai");
+    }
+
+    function displayMessage(message, role) {
+      const container = document.getElementById("chatDisplay");
+      const div = document.createElement("div");
+      div.className = `message ${role}-message`;
+      div.innerText = message;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+  </script>
+</body>
+</html>
